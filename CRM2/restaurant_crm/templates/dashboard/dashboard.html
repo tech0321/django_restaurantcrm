@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Dashboard - Restaurant CRM</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .stats { display: flex; gap: 20px; }
+        .stat { border: 1px solid #ccc; padding: 10px; border-radius: 5px; width: 150px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    <div class="stats">
+        <div class="stat">
+            <h2 id="customers-count">0</h2>
+            <p>Customers</p>
+        </div>
+        <div class="stat">
+            <h2 id="reservations-count">0</h2>
+            <p>Reservations</p>
+        </div>
+        <div class="stat">
+            <h2 id="employees-count">0</h2>
+            <p>Employees</p>
+        </div>
+        <div class="stat">
+            <h2 id="orders-count">0</h2>
+            <p>Orders</p>
+        </div>
+        <div class="stat">
+            <h2 id="inventory-count">0</h2>
+            <p>Inventory Items</p>
+        </div>
+        <div class="stat">
+            <h2 id="feedback-count">0</h2>
+            <p>Feedback Entries</p>
+        </div>
+    </div>
+
+    <script>
+        async function fetchCount(url, elementId) {
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                document.getElementById(elementId).textContent = data.length;
+            } catch (error) {
+                console.error('Error fetching ' + url, error);
+            }
+        }
+
+        fetchCount('/api/customers/', 'customers-count');
+        fetchCount('/api/reservations/', 'reservations-count');
+        fetchCount('/api/employees/', 'employees-count');
+        fetchCount('/api/orders/', 'orders-count');
+        fetchCount('/api/inventory/', 'inventory-count');
+        fetchCount('/api/feedback/', 'feedback-count');
+    </script>
+</body>
+</html>

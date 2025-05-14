@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Reservations - Restaurant CRM</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <header>Restaurant CRM</header>
+    <nav>
+        <a href="/dashboard/">Dashboard</a>
+        <a href="/customers/">Customers</a>
+        <a href="/employees/">Employees</a>
+        <a href="/orders/">Orders</a>
+        <a href="/inventory/">Inventory</a>
+        <a href="/reservations/">Reservations</a>
+        <a href="/feedback/">Feedback</a>
+    </nav>
+    <main>
+        <h1>Reservations</h1>
+        <table id="reservations-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Table Number</th>
+                    <th>Date/Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h2>Add New Reservation</h2>
+        <form id="reservation-form">
+            <label for="customer">Customer ID:</label>
+            <input type="number" id="customer" name="customer" required />
+
+            <label for="table_number">Table Number:</label>
+            <input type="number" id="table_number" name="table_number" required />
+
+            <label for="date_time">Date and Time:</label>
+            <input type="datetime-local" id="date_time" name="date_time" required />
+
+            <label for="status">Status:</label>
+            <select id="status" name="status" required>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
+            </select>
+
+            <button type="submit">Add Reservation</button>
+        </form>
+    </main>
+
+    <script>
+        async function fetchReservations() {
+            try {
+                const response = await fetch('/api/reservations/');
+                const reservations = await response.json();
+                const tbody = document.querySelector('#reservations-table tbody');
+                tbody.innerHTML = '';
+                reservations.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${r.customer}</td>
+                        <td>${r.table_number}</td>
+                        <td>${new Date(r.date_time).toLocaleString()}</td>
+                        <td>${r.status}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error fetching reservations:', error);
+            }
+        }
+
+        document.getElementById('reservation-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                customer: parseInt(form.customer.value),
+                table_number: parseInt(form.table_number.value),
+                date_time: form.date_time.value,
+                status: form.status.value,
+            };
+            try {
+                const response = await fetch('/api/reservations/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify(data),
+                });
+                if (response.ok) {
+                    form.reset();
+                    fetchReservations();
+                } else {
+                    alert('Failed to add reservation');
+                }
+            } catch (error) {
+                console.error('Error adding reservation:', error);
+            }
+        });
+
+        // CSRF helper function
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        fetchReservations();
+    </script>
+</body>
+</html>

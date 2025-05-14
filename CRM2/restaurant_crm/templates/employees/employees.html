@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Employees - Restaurant CRM</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <header>Restaurant CRM</header>
+    <nav>
+        <a href="/dashboard/">Dashboard</a>
+        <a href="/customers/">Customers</a>
+        <a href="/employees/">Employees</a>
+        <a href="/orders/">Orders</a>
+        <a href="/inventory/">Inventory</a>
+        <a href="/reservations/">Reservations</a>
+        <a href="/feedback/">Feedback</a>
+    </nav>
+    <main>
+        <h1>Employees</h1>
+        <table id="employees-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Shift</th>
+                    <th>Contact Info</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h2>Add New Employee</h2>
+        <form id="employee-form">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required />
+
+            <label for="role">Role:</label>
+            <input type="text" id="role" name="role" required />
+
+            <label for="shift">Shift:</label>
+            <select id="shift" name="shift" required>
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+                <option value="night">Night</option>
+            </select>
+
+            <label for="contact_info">Contact Info:</label>
+            <input type="text" id="contact_info" name="contact_info" required />
+
+            <button type="submit">Add Employee</button>
+        </form>
+    </main>
+
+    <script>
+        async function fetchEmployees() {
+            try {
+                const response = await fetch('/api/employees/');
+                const employees = await response.json();
+                const tbody = document.querySelector('#employees-table tbody');
+                tbody.innerHTML = '';
+                employees.forEach(e => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${e.name}</td>
+                        <td>${e.role}</td>
+                        <td>${e.shift}</td>
+                        <td>${e.contact_info}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error fetching employees:', error);
+            }
+        }
+
+        document.getElementById('employee-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                name: form.name.value,
+                role: form.role.value,
+                shift: form.shift.value,
+                contact_info: form.contact_info.value,
+            };
+            try {
+                const response = await fetch('/api/employees/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify(data),
+                });
+                if (response.ok) {
+                    form.reset();
+                    fetchEmployees();
+                } else {
+                    alert('Failed to add employee');
+                }
+            } catch (error) {
+                console.error('Error adding employee:', error);
+            }
+        });
+
+        // CSRF helper function
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        fetchEmployees();
+    </script>
+</body>
+</html>

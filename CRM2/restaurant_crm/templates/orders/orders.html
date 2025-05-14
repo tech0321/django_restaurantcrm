@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Orders - Restaurant CRM</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+    <header>Restaurant CRM</header>
+    <nav>
+        <a href="/dashboard/">Dashboard</a>
+        <a href="/customers/">Customers</a>
+        <a href="/employees/">Employees</a>
+        <a href="/orders/">Orders</a>
+        <a href="/inventory/">Inventory</a>
+        <a href="/reservations/">Reservations</a>
+        <a href="/feedback/">Feedback</a>
+    </nav>
+    <main>
+        <h1>Orders</h1>
+        <table id="orders-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Menu Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date/Time</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h2>Add New Order</h2>
+        <form id="order-form">
+            <label for="customer">Customer ID:</label>
+            <input type="number" id="customer" name="customer" required />
+
+            <label for="menu_items">Menu Items (comma separated):</label>
+            <textarea id="menu_items" name="menu_items" rows="3" required></textarea>
+
+            <label for="total">Total:</label>
+            <input type="number" step="0.01" id="total" name="total" required />
+
+            <label for="status">Status:</label>
+            <select id="status" name="status" required>
+                <option value="pending">Pending</option>
+                <option value="preparing">Preparing</option>
+                <option value="served">Served</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+
+            <button type="submit">Add Order</button>
+        </form>
+    </main>
+
+    <script>
+        async function fetchOrders() {
+            try {
+                const response = await fetch('/api/orders/');
+                const orders = await response.json();
+                const tbody = document.querySelector('#orders-table tbody');
+                tbody.innerHTML = '';
+                orders.forEach(o => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${o.customer}</td>
+                        <td>${o.menu_items}</td>
+                        <td>${o.total}</td>
+                        <td>${o.status}</td>
+                        <td>${new Date(o.date_time).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+            }
+        }
+
+        document.getElementById('order-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                customer: parseInt(form.customer.value),
+                menu_items: form.menu_items.value,
+                total: parseFloat(form.total.value),
+                status: form.status.value,
+            };
+            try {
+                const response = await fetch('/api/orders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify(data),
+                });
+                if (response.ok) {
+                    form.reset();
+                    fetchOrders();
+                } else {
+                    alert('Failed to add order');
+                }
+            } catch (error) {
+                console.error('Error adding order:', error);
+            }
+        });
+
+        // CSRF helper function
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        fetchOrders();
+    </script>
+</body>
+</html>
